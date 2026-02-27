@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply transition-colors duration-200;
+  }
+  
+  body {
+    @apply font-sans antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-dark-400 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500 dark:bg-dark-300;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium 
+           rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25
+           hover:shadow-primary-600/40 active:scale-95 disabled:opacity-50 
+           disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-dark-500 hover:bg-dark-400 text-white font-medium 
+           rounded-xl transition-all duration-200 border border-dark-400
+           active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-500 rounded-xl
+           transition-all duration-200 active:scale-95;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-gray-50 dark:bg-dark-600 border border-gray-200 
+           dark:border-dark-400 rounded-xl focus:ring-2 focus:ring-primary-500 
+           focus:border-transparent outline-none transition-all duration-200
+           placeholder:text-gray-400 dark:placeholder:text-dark-200;
+  }
+
+  .card {
+    @apply bg-white dark:bg-dark-600 rounded-2xl border border-gray-100 
+           dark:border-dark-400 shadow-sm;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 
+           dark:text-dark-100 hover:bg-gray-100 dark:hover:bg-dark-500 
+           transition-all duration-200 cursor-pointer;
+  }
+
+  .sidebar-item-active {
+    @apply bg-primary-50 dark:bg-primary-900/30 text-primary-600 
+           dark:text-primary-400 font-medium;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500 
+           bg-clip-text text-transparent;
+  }
+
+  .glass {
+    @apply bg-white/70 dark:bg-dark-700/70 backdrop-blur-xl;
+  }
+}
+
+/* Markdown styles */
+.markdown-body h1 { @apply text-2xl font-bold mt-6 mb-3; }
+.markdown-body h2 { @apply text-xl font-bold mt-5 mb-2; }
+.markdown-body h3 { @apply text-lg font-semibold mt-4 mb-2; }
+.markdown-body p { @apply mb-3 leading-relaxed; }
+.markdown-body ul { @apply list-disc pl-6 mb-3 space-y-1; }
+.markdown-body ol { @apply list-decimal pl-6 mb-3 space-y-1; }
+.markdown-body blockquote { @apply border-l-4 border-primary-500 pl-4 italic my-3 text-gray-600 dark:text-dark-100; }
+.markdown-body code { @apply bg-gray-100 dark:bg-dark-500 px-1.5 py-0.5 rounded text-sm font-mono; }
+.markdown-body pre { @apply rounded-xl overflow-hidden my-4; }
+.markdown-body pre code { @apply bg-transparent p-0; }
+.markdown-body table { @apply w-full border-collapse my-4; }
+.markdown-body th { @apply border border-gray-300 dark:border-dark-400 px-4 py-2 bg-gray-50 dark:bg-dark-500 font-semibold; }
+.markdown-body td { @apply border border-gray-300 dark:border-dark-400 px-4 py-2; }
+.markdown-body a { @apply text-primary-500 hover:underline; }
+.markdown-body strong { @apply font-bold; }
+.markdown-body em { @apply italic; }
+.markdown-body hr { @apply my-6 border-gray-200 dark:border-dark-400; }
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}
+
+.typing-dot {
+  animation: typing 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }

@@ -1,0 +1,196 @@
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role ENUM('user', 'admin') DEFAULT 'user',
+  avatar VARCHAR(500) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Subjects table
+CREATE TABLE IF NOT EXISTS subjects (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL,
+  icon VARCHAR(50) DEFAULT '📚',
+  is_default BOOLEAN DEFAULT FALSE,
+  user_id INT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Chat sessions
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  subject_id INT DEFAULT NULL,
+  subject_name VARCHAR(100) DEFAULT 'General',
+  mode VARCHAR(50) DEFAULT 'normal',
+  title VARCHAR(255) DEFAULT 'New Chat',
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL
+);
+
+-- Chat messages
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  session_id INT NOT NULL,
+  role ENUM('user', 'assistant', 'system') NOT NULL,
+  content TEXT NOT NULL,
+  content_type ENUM('text', 'code', 'image', 'video', 'audio') DEFAULT 'text',
+  tokens_used INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+);
+
+-- Study statistics
+CREATE TABLE IF NOT EXISTS study_stats (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  subject_name VARCHAR(100) NOT NULL,
+  time_spent_seconds INT DEFAULT 0,
+  questions_asked INT DEFAULT 0,
+  session_date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_subject_date (user_id, subject_name, session_date)
+);
+
+-- Generated media
+CREATE TABLE IF NOT EXISTS generated_media (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  media_type ENUM('image', 'video', 'audio') NOT NULL,
+  prompt TEXT NOT NULL,
+  url VARCHAR(1000) DEFAULT NULL,
+  file_path VARCHAR(500) DEFAULT NULL,
+  status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- User preferences
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL UNIQUE,
+  theme ENUM('light', 'dark') DEFAULT 'dark',
+  preferred_mode VARCHAR(50) DEFAULT 'normal',
+  tts_enabled BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Insert default subjects
+INSERT IGNORE INTO subjects (name, icon, is_default) VALUES
+('DBMS', '🗄️', TRUE),
+('C Programming', '©️', TRUE),
+('Java', '☕', TRUE),
+('Python', '🐍', TRUE),
+('Data Structures', '🌳', TRUE),
+('Algorithms', '⚙️', TRUE),
+('Operating Systems', '💻', TRUE),
+('Computer Networks', '🌐', TRUE),
+('Aptitude', '🧮', TRUE),
+('System Design', '🏗️', TRUE);
+
+-- Insert admin user (password: admin123)
+INSERT IGNORE INTO users (username, email, password, role) VALUES
+('admin', 'admin@studybuddy.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+
+-- ============================================
+-- MCQ TABLES
+-- ============================================
+
+-- MCQ Quiz Sessions
+CREATE TABLE IF NOT EXISTS mcq_sessions (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  subject_name VARCHAR(100) NOT NULL,
+  topic VARCHAR(200) NOT NULL,
+  difficulty ENUM('easy', 'medium', 'hard') NOT NULL DEFAULT 'medium',
+  total_questions INT NOT NULL DEFAULT 10,
+  answered INT DEFAULT 0,
+  correct INT DEFAULT 0,
+  wrong INT DEFAULT 0,
+  skipped INT DEFAULT 0,
+  score_percentage DECIMAL(5,2) DEFAULT 0.00,
+  time_taken_seconds INT DEFAULT 0,
+  status ENUM('in_progress', 'completed', 'abandoned') DEFAULT 'in_progress',
+  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_id (user_id),
+  INDEX idx_subject (subject_name),
+  INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- MCQ Questions (generated by AI)
+CREATE TABLE IF NOT EXISTS mcq_questions (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  session_id INT NOT NULL,
+  question_number INT NOT NULL,
+  question_text TEXT NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  option_c TEXT NOT NULL,
+  option_d TEXT NOT NULL,
+  correct_answer ENUM('A', 'B', 'C', 'D') NOT NULL,
+  explanation TEXT DEFAULT NULL,
+  difficulty ENUM('easy', 'medium', 'hard') NOT NULL,
+  user_answer ENUM('A', 'B', 'C', 'D') DEFAULT NULL,
+  is_correct BOOLEAN DEFAULT NULL,
+  is_bookmarked BOOLEAN DEFAULT FALSE,
+  time_spent_seconds INT DEFAULT 0,
+  answered_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES mcq_sessions(id) ON DELETE CASCADE,
+  INDEX idx_session (session_id),
+  INDEX idx_bookmarked (is_bookmarked)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- MCQ Performance Tracking (per subject per topic)
+CREATE TABLE IF NOT EXISTS mcq_performance (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  subject_name VARCHAR(100) NOT NULL,
+  topic VARCHAR(200) NOT NULL,
+  difficulty ENUM('easy', 'medium', 'hard') NOT NULL,
+  total_attempted INT DEFAULT 0,
+  total_correct INT DEFAULT 0,
+  accuracy DECIMAL(5,2) DEFAULT 0.00,
+  best_score DECIMAL(5,2) DEFAULT 0.00,
+  total_time_seconds INT DEFAULT 0,
+  last_attempted_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_subject_topic_diff (user_id, subject_name, topic, difficulty),
+  INDEX idx_user_subject (user_id, subject_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Bookmarked Questions (for 
+CREATE TABLE IF NOT EXISTS mcq_bookmarks (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  question_text TEXT NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  option_c TEXT NOT NULL,
+  option_d TEXT NOT NULL,
+  correct_answer ENUM('A', 'B', 'C', 'D') NOT NULL,
+  explanation TEXT,
+  subject_name VARCHAR(100) NOT NULL,
+  topic VARCHAR(200) NOT NULL,
+  difficulty ENUM('easy', 'medium', 'hard') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_subject (user_id, subject_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
