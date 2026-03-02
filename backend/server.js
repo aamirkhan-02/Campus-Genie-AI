@@ -17,6 +17,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const adminRoutes = require('./routes/admin');
 const mcqRoutes = require('./routes/mcq');
 const youtubeRoutes = require('./routes/youtube');
+const imageGenerateRoutes = require('./routes/imageGenerate');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -66,11 +67,12 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/mcq', mcqRoutes);
 app.use('/api/youtube', youtubeRoutes);
+app.use('/api/images', imageGenerateRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'Smart Study Buddy API is running!',
     timestamp: new Date().toISOString()
   });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Play } from 'lucide-react';
+import { Image, Play, Wand2 } from 'lucide-react';
 import ImageGenerator from '../components/Media/ImageGenerator';
 import VideoGenerator from '../components/Media/VideoGenerator';
 
@@ -11,7 +11,7 @@ export default function MediaPage() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">Media Studio</h2>
         <p className="text-gray-500 dark:text-dark-200">
-          Find educational videos and generate AI diagrams
+          Find educational videos and generate AI images for any topic
         </p>
       </div>
 
@@ -29,15 +29,15 @@ export default function MediaPage() {
           YouTube Videos
         </button>
         <button
-          onClick={() => setTab('image')}
+          onClick={() => setTab('images')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all
-            ${tab === 'image'
-              ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/25'
+            ${tab === 'images'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
               : 'bg-gray-100 dark:bg-dark-500 hover:bg-gray-200 dark:hover:bg-dark-400'
             }`}
         >
-          <Image className="w-5 h-5" />
-          AI Image Generator
+          <Wand2 className="w-5 h-5" />
+          AI Images
         </button>
       </div>
 
