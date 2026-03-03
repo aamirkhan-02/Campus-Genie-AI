@@ -194,3 +194,43 @@ CREATE TABLE IF NOT EXISTS mcq_bookmarks (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_user_subject (user_id, subject_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- EMAIL AUTHENTICATION TABLES
+-- ============================================
+
+-- OTP verification codes
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  otp_code VARCHAR(6) NOT NULL,
+  purpose ENUM('email_verify', 'password_reset', 'login_verify') NOT NULL,
+  is_used BOOLEAN DEFAULT FALSE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_email_otp (email, otp_code),
+  INDEX idx_expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Password reset tokens
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  token VARCHAR(255) NOT NULL UNIQUE,
+  is_used BOOLEAN DEFAULT FALSE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_token (token),
+  INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Note: The following ALTER TABLE statements are handled individually by dbSetup.js
+-- to gracefully skip columns that already exist.
+-- ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE users ADD COLUMN email_verified_at TIMESTAMP NULL;
+-- ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP NULL;
+-- ALTER TABLE users ADD COLUMN login_count INT DEFAULT 0;

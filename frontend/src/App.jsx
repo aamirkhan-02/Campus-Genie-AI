@@ -12,7 +12,9 @@ import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/Common/ProtectedRoute';
 import LoadingSpinner from './components/Common/LoadingSpinner';
 import McqPage from './pages/McqPage';
-
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 function App() {
   const { user, loading } = useAuth();
 
@@ -28,6 +30,9 @@ function App() {
     <Routes>
       <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
       <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/dashboard" />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />

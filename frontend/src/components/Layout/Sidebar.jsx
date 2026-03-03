@@ -1,16 +1,24 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, MessageSquare, Image, History,
-  Shield, LogOut, Plus, X, ChevronLeft, GraduationCap
+  Shield, LogOut, Plus, X, ChevronLeft, GraduationCap,
+  Camera, Trash2
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { SUBJECTS } from '../../utils/constants';
+import { authService } from '../../services/authService';
+import CropModal from '../Common/CropModal';
+import toast from 'react-hot-toast';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [showSubjects, setShowSubjects] = useState(false);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [cropImage, setCropImage] = useState(null);
+  const fileInputRef = useRef(null);
 
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -33,6 +41,59 @@ export default function Sidebar({ isOpen, onClose }) {
     logout();
     navigate('/login');
   };
+
+  // When user picks a file, open the crop modal instead of uploading directly
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Only JPG, PNG, and WebP images are allowed');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5 MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => setCropImage(reader.result);
+    reader.readAsDataURL(file);
+    setShowAvatarMenu(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // After cropping, upload the blob
+  const handleCropDone = async (blob) => {
+    setCropImage(null);
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', blob, 'avatar.jpg');
+      const res = await authService.uploadAvatar(formData);
+      updateUser({ avatar: res.data.data.avatar });
+      toast.success('Profile picture updated! 🎉');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to upload avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    try {
+      await authService.removeAvatar();
+      updateUser({ avatar: null });
+      toast.success('Profile picture removed');
+    } catch {
+      toast.error('Failed to remove avatar');
+    } finally {
+      setShowAvatarMenu(false);
+    }
+  };
+
+  // Use the proxy path directly (Vite proxies /uploads → backend)
+  const avatarUrl = user?.avatar || null;
 
   return (
     <>
@@ -118,11 +179,74 @@ export default function Sidebar({ isOpen, onClose }) {
 
         {/* User section */}
         <div className="p-4 border-t border-gray-100 dark:border-dark-500">
-          <div className="flex items-center gap-3 mb-3 px-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-purple-500 
-                          rounded-full flex items-center justify-center text-white font-bold text-sm">
-              {user?.username?.[0]?.toUpperCase() || 'U'}
-            </div>
+          <div className="flex items-center gap-3 mb-3 px-2 relative">
+            {/* Avatar with click-to-change */}
+            <button
+              onClick={() => setShowAvatarMenu(!showAvatarMenu)}
+              className="relative group flex-shrink-0"
+              title="Change profile picture"
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={user?.username}
+                  className="w-9 h-9 rounded-full object-cover ring-2 ring-primary-400/30"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-purple-500 
+                              rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {user?.username?.[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
+              {/* Camera overlay on hover */}
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center
+                            opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <Camera className="w-3.5 h-3.5 text-white" />
+              </div>
+              {uploading && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </button>
+
+            {/* Avatar dropdown menu */}
+            {showAvatarMenu && (
+              <>
+                <div className="fixed inset-0 z-50" onClick={() => setShowAvatarMenu(false)} />
+                <div className="absolute left-0 bottom-full mb-2 z-50 w-48 py-1 
+                              bg-white dark:bg-dark-600 rounded-xl shadow-lg border border-gray-200 
+                              dark:border-dark-400 animate-fade-in">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm
+                             hover:bg-gray-50 dark:hover:bg-dark-500 transition-colors"
+                  >
+                    <Camera className="w-4 h-4 text-primary-500" />
+                    <span>{user?.avatar ? 'Change Photo' : 'Upload Photo'}</span>
+                  </button>
+                  {user?.avatar && (
+                    <button
+                      onClick={handleAvatarRemove}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-500
+                               hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Remove Photo</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user?.username}</p>
               <p className="text-xs text-gray-500 dark:text-dark-200 truncate">{user?.email}</p>
@@ -137,6 +261,15 @@ export default function Sidebar({ isOpen, onClose }) {
           </button>
         </div>
       </aside>
+
+      {/* Crop Modal */}
+      {cropImage && (
+        <CropModal
+          imageSrc={cropImage}
+          onCropDone={handleCropDone}
+          onClose={() => setCropImage(null)}
+        />
+      )}
     </>
   );
 }

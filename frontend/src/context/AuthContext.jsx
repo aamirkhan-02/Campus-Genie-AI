@@ -30,22 +30,26 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    const { user: userData, token } = res.data.data;
-    localStorage.setItem('token', token);
-    setUser(userData);
+  const res = await api.post('/auth/login', { email, password });
+  const { user: userData, token, requiresVerification } = res.data.data;
+  localStorage.setItem('token', token);
+  setUser(userData);
+  if (requiresVerification) {
+    toast('Please verify your email', { icon: '📧' });
+  } else {
     toast.success('Welcome back! 🎉');
-    return userData;
-  };
+  }
+  return { user: userData, requiresVerification };
+};
 
   const register = async (username, email, password) => {
-    const res = await api.post('/auth/register', { username, email, password });
-    const { user: userData, token } = res.data.data;
-    localStorage.setItem('token', token);
-    setUser(userData);
-    toast.success('Account created successfully! 🚀');
-    return userData;
-  };
+  const res = await api.post('/auth/register', { username, email, password });
+  const { user: userData, token, requiresVerification } = res.data.data;
+  localStorage.setItem('token', token);
+  setUser(userData);
+  toast.success('Account created! Check your email for verification code 📧');
+  return { user: userData, requiresVerification };
+};
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -53,8 +57,12 @@ export function AuthProvider({ children }) {
     toast.success('Logged out');
   };
 
+  const updateUser = (updates) => {
+    setUser(prev => prev ? { ...prev, ...updates } : prev);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, checkAuth, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

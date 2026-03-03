@@ -13,26 +13,32 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!username || !email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
+  e.preventDefault();
+  if (!username || !email || !password) {
+    toast.error('Please fill in all fields');
+    return;
+  }
+  if (password.length < 6) {
+    toast.error('Password must be at least 6 characters');
+    return;
+  }
 
-    setLoading(true);
-    try {
-      await register(username, email, password);
+  setLoading(true);
+  try {
+    const { requiresVerification } = await register(username, email, password);
+    if (requiresVerification) {
+      navigate('/verify-email');
+    } else {
       navigate('/dashboard');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Registration failed');
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Registration failed');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-800 via-dark-900 to-primary-900 
