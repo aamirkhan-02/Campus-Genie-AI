@@ -12,6 +12,7 @@
 | 🎓 **MCQ Practice** | Auto-generated multiple-choice questions per subject & topic |
 | 🎬 **YouTube Videos** | Curated educational videos with multi-language support (28 languages) |
 | 🖼️ **Media Studio** | AI-generated diagrams, flashcards, and study notes |
+| 🎨 **AI Image Generation** | Generate educational images from text prompts via ImageKit (10 styles) |
 | 📊 **Dashboard** | Study stats, streak tracking, and progress charts |
 | 🔐 **Auth** | JWT-based register / login with bcrypt password hashing |
 | 🛡️ **Admin Panel** | User management and platform statistics |
@@ -36,6 +37,7 @@
 - **Node.js** + **Express** — REST API server
 - **MySQL 2** — relational database
 - **Google Gemini 2.5 Flash** (`@google/generative-ai`) — AI responses & content generation
+- **ImageKit** — AI image generation from text prompts
 - **YouTube Data API v3** — video search & recommendations
 - **JWT** + **bcryptjs** — authentication & security
 - **Helmet** + **express-rate-limit** — API security
@@ -88,6 +90,7 @@ campus-genie/
 - **MySQL** 8.0+
 - **Google Gemini API Key** — [Get one here](https://aistudio.google.com/app/apikey)
 - **YouTube Data API v3 Key** — [Get one here](https://console.cloud.google.com/)
+- **ImageKit Account** — [Sign up here](https://imagekit.io/) (for AI image generation)
 
 ---
 
@@ -124,6 +127,8 @@ JWT_EXPIRES_IN=7d
 
 GEMINI_API_KEY=your_gemini_api_key_here
 YOUTUBE_API_KEY=your_youtube_api_key_here
+
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_imagekit_id
 
 FRONTEND_URL=http://localhost:5173
 ```
@@ -185,6 +190,11 @@ docker-compose -f docker-compose.prod.yml up -d
 | GET | `/api/youtube/languages` | Supported languages | ✅ |
 | POST | `/api/youtube/save` | Save video to library | ✅ |
 | POST | `/api/media/generate` | Generate study media | ✅ |
+| GET | `/api/images/generate` | Generate AI image from prompt | ✅ |
+| GET | `/api/images/styles` | List available image styles | ✅ |
+| POST | `/api/images/save` | Save generated image | ✅ |
+| GET | `/api/images/saved` | Get saved images | ✅ |
+| DELETE | `/api/images/saved/:id` | Delete a saved image | ✅ |
 | GET | `/api/admin/users` | List all users | ✅ Admin |
 
 > **Auth** — Pass `Authorization: Bearer <token>` header for protected routes.
@@ -211,6 +221,7 @@ English, Hindi, Tamil, Telugu, Kannada, Malayalam, Marathi, Bengali, Gujarati, P
 | `JWT_EXPIRES_IN` | ✅ | JWT expiry duration (e.g. `7d`) |
 | `GEMINI_API_KEY` | ✅ | Google Gemini API key |
 | `YOUTUBE_API_KEY` | ✅ | YouTube Data API v3 key |
+| `IMAGEKIT_URL_ENDPOINT` | ✅ | ImageKit URL endpoint for image generation |
 | `FRONTEND_URL` | ✅ | CORS allowed origin |
 
 ---
