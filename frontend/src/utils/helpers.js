@@ -61,3 +61,17 @@ export function downloadAsFile(content, filename, mimeType = 'text/plain') {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+/**
+ * Format a date as a localized human-readable string
+ * e.g. "5 Mar 2026"
+ */
+export function formatDate(date) {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+}
+

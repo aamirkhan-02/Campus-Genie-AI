@@ -84,3 +84,48 @@ exports.getMostAskedQuestions = async (req, res, next) => {
     next(error);
   }
 };
+
+// Get MCQ statistics
+exports.getMcqStats = async (req, res, next) => {
+  try {
+    const [totalQuizzes] = await pool.query(
+      "SELECT COUNT(*) as count FROM mcq_sessions WHERE status = 'completed'"
+    );
+
+    const [avgScore] = await pool.query(
+      "SELECT AVG(score_percentage) as avg FROM mcq_sessions WHERE status = 'completed'"
+    );
+
+    const [topSubjects] = await pool.query(
+      `SELECT subject_name, COUNT(*) as quizzes, AVG(score_percentage) as avg_score
+       FROM mcq_sessions WHERE status = 'completed'
+       GROUP BY subject_name ORDER BY quizzes DESC LIMIT 10`
+    );
+
+    const [difficultyBreakdown] = await pool.query(
+      `SELECT difficulty, COUNT(*) as count, AVG(score_percentage) as avg_score
+       FROM mcq_sessions WHERE status = 'completed'
+       GROUP BY difficulty`
+    );
+
+    const [recentQuizzes] = await pool.query(
+      `SELECT ms.*, u.username 
+       FROM mcq_sessions ms JOIN users u ON ms.user_id = u.id
+       WHERE ms.status = 'completed'
+       ORDER BY ms.completed_at DESC LIMIT 20`
+    );
+
+    res.json({
+      success: true,
+      data: {
+        totalQuizzes: totalQuizzes[0].count,
+        avgScore: parseFloat(avgScore[0].avg || 0).toFixed(1),
+        topSubjects,
+        difficultyBreakdown,
+        recentQuizzes
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

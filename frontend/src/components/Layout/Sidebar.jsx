@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, MessageSquare, Image, History,
-  Shield, LogOut, Plus, X, ChevronLeft, GraduationCap,
+  Shield, LogOut,BookOpen, Plus, X, ChevronLeft, GraduationCap,Settings,
   Camera, Trash2
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -10,6 +10,7 @@ import { SUBJECTS } from '../../utils/constants';
 import { authService } from '../../services/authService';
 import CropModal from '../Common/CropModal';
 import toast from 'react-hot-toast';
+
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, logout, updateUser } = useAuth();
@@ -26,6 +27,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { path: '/mcq', icon: GraduationCap, label: 'MCQ Practice' },
     { path: '/media', icon: Image, label: 'Media Studio' },
     { path: '/history', icon: History, label: 'History' },
+     { path: '/profile', icon: Settings, label: 'Settings' },
   ];
 
   if (user?.role === 'admin') {
