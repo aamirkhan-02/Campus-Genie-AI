@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS study_stats (
 CREATE TABLE IF NOT EXISTS generated_media (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
-    media_type ENUM('image', 'video', 'audio') NOT NULL,
+    media_type ENUM('image', 'video', 'audio', 'ai_image') NOT NULL,
     prompt TEXT NOT NULL,
     url VARCHAR(1000) DEFAULT NULL,
     file_path VARCHAR(500) DEFAULT NULL,
@@ -121,6 +121,21 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Notifications
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    icon VARCHAR(20) DEFAULT '🔔',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id),
+    INDEX idx_unread (user_id, is_read)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert default subjects

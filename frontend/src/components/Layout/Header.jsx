@@ -1,5 +1,6 @@
-import { Menu, Bell } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import ThemeToggle from '../Common/ThemeToggle';
+import NotificationDropdown from './NotificationDropdown';
 
 export default function Header({ onMenuClick, title }) {
   return (
@@ -17,10 +18,7 @@ export default function Header({ onMenuClick, title }) {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <button className="p-2 hover:bg-gray-100 dark:hover:bg-dark-500 rounded-xl relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
+          <NotificationDropdown />
         </div>
       </div>
     </header>

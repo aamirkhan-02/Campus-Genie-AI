@@ -7,6 +7,7 @@ const {
   generateOTP, generateToken, sendVerificationOTP,
   sendPasswordResetEmail, sendPasswordResetOTP, sendWelcomeEmail
 } = require('../utils/emailService');
+const { createNotification } = require('../utils/notificationHelper');
 
 // ============================================
 // REGISTER
@@ -163,6 +164,14 @@ exports.verifyEmail = async (req, res, next) => {
 
     if (user.length > 0) {
       sendWelcomeEmail(email, user[0].username).catch(() => { });
+      // 🔔 Welcome notification
+      createNotification(
+        otpRecord.user_id,
+        'welcome',
+        '🎉 Welcome to Campus Genie AI!',
+        `Your account is all set, ${user[0].username}! Start chatting with AI, practising MCQs, and tracking your study progress.`,
+        '🎉'
+      );
     }
 
     res.json({
@@ -373,6 +382,15 @@ exports.forgotPassword = async (req, res, next) => {
 
       await sendPasswordResetOTP(email, user.username, otp);
 
+      // 🔔 Security notification
+      createNotification(
+        user.id,
+        'security',
+        '🔒 Password Reset Requested',
+        'A password reset OTP was sent to your email. If this wasn\'t you, please contact support immediately.',
+        '🔒'
+      );
+
       return res.json({
         success: true,
         message: 'Password reset OTP sent to your email',
@@ -396,6 +414,15 @@ exports.forgotPassword = async (req, res, next) => {
       );
 
       await sendPasswordResetEmail(email, user.username, resetToken);
+
+      // 🔔 Security notification
+      createNotification(
+        user.id,
+        'security',
+        '🔒 Password Reset Requested',
+        'A password reset link was sent to your email. If this wasn\'t you, please contact support immediately.',
+        '🔒'
+      );
 
       return res.json({
         success: true,
@@ -523,6 +550,15 @@ exports.resetPassword = async (req, res, next) => {
       [resetRecord.user_id]
     );
 
+    // 🔔 Security notification
+    createNotification(
+      resetRecord.user_id,
+      'security',
+      '🔑 Password Reset Successful',
+      'Your password was reset successfully. If you did not do this, contact support immediately.',
+      '🔑'
+    );
+
     res.json({
       success: true,
       message: 'Password reset successful! You can now login with your new password.'
@@ -575,6 +611,15 @@ exports.changePassword = async (req, res, next) => {
     await pool.query(
       'UPDATE users SET password = ? WHERE id = ?',
       [hashedPassword, req.user.id]
+    );
+
+    // 🔔 Security notification
+    createNotification(
+      req.user.id,
+      'security',
+      '🔑 Password Changed',
+      'Your account password was changed successfully. If this wasn\'t you, contact support immediately.',
+      '🔑'
     );
 
     res.json({
@@ -652,6 +697,15 @@ exports.uploadAvatar = async (req, res, next) => {
     const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
     await pool.query('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, req.user.id]);
+
+    // 🔔 Profile notification
+    createNotification(
+      req.user.id,
+      'profile',
+      '🖼️ Profile Picture Updated',
+      'Your profile picture has been updated successfully.',
+      '🖼️'
+    );
 
     res.json({
       success: true,

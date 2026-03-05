@@ -113,7 +113,7 @@ exports.saveImage = async (req, res, next) => {
 
         // Check duplicate
         const [existing] = await pool.query(
-            "SELECT id FROM generated_media WHERE user_id = ? AND media_type = 'ai_image' AND url = ?",
+            "SELECT id FROM generated_media WHERE user_id = ? AND media_type = 'image' AND url = ?",
             [req.user.id, imageUrl]
         );
 
@@ -126,7 +126,7 @@ exports.saveImage = async (req, res, next) => {
 
         await pool.query(
             `INSERT INTO generated_media (user_id, media_type, prompt, url, file_path, status)
-       VALUES (?, 'ai_image', ?, ?, ?, 'completed')`,
+       VALUES (?, 'image', ?, ?, ?, 'completed')`,
             [
                 req.user.id,
                 JSON.stringify({ prompt, style }),
@@ -149,7 +149,7 @@ exports.saveImage = async (req, res, next) => {
 // ============================================
 exports.getSavedImages = async (req, res, next) => {
     try {
-        let query = "SELECT * FROM generated_media WHERE user_id = ? AND media_type = 'ai_image' AND status = 'completed'";
+        let query = "SELECT * FROM generated_media WHERE user_id = ? AND media_type = 'image' AND status = 'completed'";
         const params = [req.user.id];
         query += ' ORDER BY created_at DESC';
 
@@ -179,7 +179,7 @@ exports.getSavedImages = async (req, res, next) => {
 exports.deleteSavedImage = async (req, res, next) => {
     try {
         await pool.query(
-            "DELETE FROM generated_media WHERE id = ? AND user_id = ? AND media_type = 'ai_image'",
+            "DELETE FROM generated_media WHERE id = ? AND user_id = ? AND media_type = 'image'",
             [req.params.id, req.user.id]
         );
         res.json({ success: true, message: 'Image removed' });
