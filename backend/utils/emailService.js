@@ -28,7 +28,12 @@ const createTransporter = () => {
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
-    socketTimeout: 15000
+    socketTimeout: 15000,
+    dnsTimeout: 10000,
+    // Force IPv4 — Render free tier doesn't support IPv6
+    lookup: (hostname, options, callback) => {
+      dns.lookup(hostname, { family: 4 }, callback);
+    }
   });
 };
 
