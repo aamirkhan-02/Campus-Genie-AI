@@ -24,6 +24,7 @@
     "mysql2": "^3.18.2",
     "nodemailer": "^8.0.1",
     "openai": "^4.104.0",
+    "resend": "^6.9.3",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

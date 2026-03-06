@@ -1,9 +1,13 @@
-const nodemailer = require('nodemailer');
-const dns = require('dns');
+const { Resend } = require('resend');
 require('dotenv').config();
 
-// Force IPv4 DNS resolution (Render free tier doesn't support IPv6)
-dns.setDefaultResultOrder('ipv4first');
+// ============================================
+// RESEND EMAIL CLIENT (HTTP-based, works on all hosting)
+// ============================================
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Sender — use your verified domain, or Resend's default for testing
+const FROM_EMAIL = process.env.EMAIL_FROM || 'Campus Genie AI <onboarding@resend.dev>';
 
 // ============================================
 // LOGO - hosted on ImageKit (public CDN, always visible in emails)
@@ -11,31 +15,6 @@ dns.setDefaultResultOrder('ipv4first');
 const LOGO_URL = process.env.EMAIL_LOGO_URL || 'https://ik.imagekit.io/Aamir02/email-assets/campus-genie-logo.png';
 
 const LOGO_BLOCK = `<img src="${LOGO_URL}" alt="Campus Genie AI" width="80" height="80" style="width:80px;height:80px;border-radius:18px;background:white;padding:6px;box-shadow:0 4px 20px rgba(0,0,0,0.35);display:block;margin:0 auto 14px;" />`;
-
-
-
-// ============================================
-// CREATE EMAIL TRANSPORTER
-// ============================================
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-    dnsTimeout: 10000,
-    // Force IPv4 — Render free tier doesn't support IPv6
-    lookup: (hostname, options, callback) => {
-      dns.lookup(hostname, { family: 4 }, callback);
-    }
-  });
-};
 
 // ============================================
 // GENERATE 6-DIGIT OTP
@@ -91,11 +70,29 @@ const emailWrapper = (headerBg, headerContent, bodyContent) => `<!DOCTYPE html>
 </html>`;
 
 // ============================================
+// HELPER: Send email via Resend
+// ============================================
+const sendEmail = async (to, subject, html) => {
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html
+  });
+
+  if (error) {
+    console.error(`❌ Email send failed:`, error.message || error);
+    throw new Error(error.message || 'Email delivery failed');
+  }
+
+  console.log(`📧 Email sent to ${to} | ID: ${data.id}`);
+  return { success: true, messageId: data.id };
+};
+
+// ============================================
 // SEND VERIFICATION OTP EMAIL
 // ============================================
 const sendVerificationOTP = async (email, username, otp) => {
-  const transporter = createTransporter();
-
   const header = `
       <h1 style="color:#ffffff;margin:10px 0 4px;font-size:22px;font-weight:700;letter-spacing:0.3px;">&#127891; Campus Genie AI</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;font-weight:500;">Email Verification</p>`;
@@ -122,28 +119,17 @@ const sendVerificationOTP = async (email, username, otp) => {
         Didn't create an account? You can safely ignore this email.
       </p>`;
 
-  const mailOptions = {
-    from: `"Campus Genie AI" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: '🎓 Verify Your Email - Campus Genie AI',
-    html: emailWrapper('linear-gradient(135deg,#4c6ef5 0%,#7c3aed 100%)', header, body)
-  };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`📧 Verification OTP sent to ${email} | OTP: ${otp} | MessageID: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`❌ Email send failed:`, error.message);
-    throw error;
-  }
+  return sendEmail(
+    email,
+    '🎓 Verify Your Email - Campus Genie AI',
+    emailWrapper('linear-gradient(135deg,#4c6ef5 0%,#7c3aed 100%)', header, body)
+  );
 };
 
 // ============================================
 // SEND PASSWORD RESET EMAIL
 // ============================================
 const sendPasswordResetEmail = async (email, username, resetToken) => {
-  const transporter = createTransporter();
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
   const header = `
@@ -171,29 +157,17 @@ const sendPasswordResetEmail = async (email, username, resetToken) => {
         </tr>
       </table>`;
 
-  const mailOptions = {
-    from: `"Campus Genie AI" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: '🔑 Reset Your Password - Campus Genie AI',
-    html: emailWrapper('linear-gradient(135deg,#ef4444 0%,#f97316 100%)', header, body)
-  };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`📧 Password reset email sent to ${email}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`❌ Email send failed:`, error.message);
-    throw error;
-  }
+  return sendEmail(
+    email,
+    '🔑 Reset Your Password - Campus Genie AI',
+    emailWrapper('linear-gradient(135deg,#ef4444 0%,#f97316 100%)', header, body)
+  );
 };
 
 // ============================================
 // SEND PASSWORD RESET OTP EMAIL
 // ============================================
 const sendPasswordResetOTP = async (email, username, otp) => {
-  const transporter = createTransporter();
-
   const header = `
       <h1 style="color:#ffffff;margin:10px 0 4px;font-size:22px;font-weight:700;">&#128273; Campus Genie AI</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;font-weight:500;">Password Reset OTP</p>`;
@@ -216,29 +190,17 @@ const sendPasswordResetOTP = async (email, username, otp) => {
         </tr>
       </table>`;
 
-  const mailOptions = {
-    from: `"Campus Genie AI" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: '🔑 Password Reset OTP - Campus Genie AI',
-    html: emailWrapper('linear-gradient(135deg,#ef4444 0%,#f97316 100%)', header, body)
-  };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`📧 Password reset OTP sent to ${email} | OTP: ${otp}`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`❌ Email send failed:`, error.message);
-    throw error;
-  }
+  return sendEmail(
+    email,
+    '🔑 Password Reset OTP - Campus Genie AI',
+    emailWrapper('linear-gradient(135deg,#ef4444 0%,#f97316 100%)', header, body)
+  );
 };
 
 // ============================================
 // SEND WELCOME EMAIL (after verification)
 // ============================================
 const sendWelcomeEmail = async (email, username) => {
-  const transporter = createTransporter();
-
   const header = `
       <h1 style="color:#ffffff;margin:10px 0 4px;font-size:22px;font-weight:700;">&#127881; Campus Genie AI</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;font-weight:500;">Welcome Aboard!</p>`;
@@ -254,8 +216,8 @@ const sendWelcomeEmail = async (email, username) => {
           <tr><td style="color:#374151;font-size:14px;padding:3px 0;">&#128172; Chat with AI in multiple learning modes</td></tr>
           <tr><td style="color:#374151;font-size:14px;padding:3px 0;">&#128221; Practice MCQs with adaptive difficulty</td></tr>
           <tr><td style="color:#374151;font-size:14px;padding:3px 0;">&#127909; Watch YouTube tutorials in any language</td></tr>
-          <tr><td style="color:#374151;font-size:14px;padding:3px 0;">&#128444; Search educational diagrams &amp; images</td></tr>
-          <tr><td style="color:#374151;font-size:14px;padding:3px 0;">&#128202; Track your study progress &amp; analytics</td></tr>
+          <tr><td style="color:#374151;font-size:14px;padding:3px 0;">&#128444; Search educational diagrams & images</td></tr>
+          <tr><td style="color:#374151;font-size:14px;padding:3px 0;">&#128202; Track your study progress & analytics</td></tr>
         </table>
       </div>
       <div style="text-align:center;">
@@ -264,16 +226,12 @@ const sendWelcomeEmail = async (email, username) => {
         </a>
       </div>`;
 
-  const mailOptions = {
-    from: `"Campus Genie AI" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: '🎉 Welcome to Campus Genie AI!',
-    html: emailWrapper('linear-gradient(135deg,#22c55e 0%,#10b981 100%)', header, body)
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(`📧 Welcome email sent to ${email}`);
+    await sendEmail(
+      email,
+      '🎉 Welcome to Campus Genie AI!',
+      emailWrapper('linear-gradient(135deg,#22c55e 0%,#10b981 100%)', header, body)
+    );
   } catch (error) {
     console.error(`Welcome email failed:`, error.message);
     // Don't throw - welcome email is not critical
@@ -284,15 +242,16 @@ const sendWelcomeEmail = async (email, username) => {
 // VERIFY EMAIL CONFIG
 // ============================================
 const verifyEmailConfig = async () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-    console.log('⚠️  Email not configured. Set EMAIL_USER and EMAIL_PASSWORD in .env');
+  if (!process.env.RESEND_API_KEY) {
+    console.log('⚠️  Email not configured. Set RESEND_API_KEY in .env');
     return false;
   }
 
   try {
-    const transporter = createTransporter();
-    await transporter.verify();
-    console.log('✅ Email service connected successfully');
+    // Test the API key by listing domains
+    const { error } = await resend.domains.list();
+    if (error) throw new Error(error.message);
+    console.log('✅ Email service (Resend) connected successfully');
     return true;
   } catch (error) {
     console.error('❌ Email service connection failed:', error.message);
