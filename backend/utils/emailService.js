@@ -1,5 +1,9 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 require('dotenv').config();
+
+// Force IPv4 DNS resolution (Render free tier doesn't support IPv6)
+dns.setDefaultResultOrder('ipv4first');
 
 // ============================================
 // LOGO - hosted on ImageKit (public CDN, always visible in emails)
